@@ -1,0 +1,12 @@
+C1	epoch	0	epoch	provider	1
+C1	account	0	account	customer	synthetic	offline	credit	6	100
+C1	offer	0	offer	offer-v1	provider	1	1	cpu	2	0	30	25	synthetic	offline	credit	6	2	slot-tick	1
+C1	reserve	0	reserve	reservation	customer	offer-v1	provider	1	1	cpu	slot-tick	1	0	10	20	synthetic	offline	credit	6	20
+C1	attempt	0	attempt	attempt	reservation	invoice
+C1	accepted	10	accept	receipt	attempt	reservation	invoice	external-acceptance	slot-tick	10
+C1	collect	10	collect	collection	invoice	synthetic	offline	credit	6	20
+C1	submit	10	submit	collection
+C1	resolve	10	reconcile	collection	external-payment	paid
+C1	credit	10	credit	credit-note	invoice	synthetic	offline	credit	6	7	paid	external-credit
+C1	refund	10	refund	credit-note	external-refund
+C1	close	10	close	reservation

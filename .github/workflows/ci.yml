@@ -1,0 +1,47 @@
+name: Manual qualified-fleet validation
+on:
+  workflow_dispatch:
+    inputs:
+      route:
+        description: Qualified route (no fallback)
+        type: choice
+        options:
+          - naevum-vps-amd64
+          - ci-linux-arm64
+        default: naevum-vps-amd64
+        required: true
+      campaign:
+        description: Owner-authorized campaign
+        type: string
+        default: apocryph-compute-20261021
+        required: true
+      rust_toolchain:
+        description: Coordinator-qualified installed exact Rust release (for example 1.85.1)
+        type: string
+        required: true
+permissions:
+  contents: read
+jobs:
+  reference:
+    runs-on: [self-hosted, Linux, '${{ inputs.route }}']
+    timeout-minutes: 20
+    env:
+      CI_ROUTE: ${{ inputs.route }}
+      CI_CAMPAIGN: ${{ inputs.campaign }}
+      QUALIFIED_RUST_TOOLCHAIN: ${{ inputs.rust_toolchain }}
+      CI_SOURCE_SHA: ${{ github.sha }}
+      CI_RUNNER_ENVIRONMENT: ${{ runner.environment }}
+      CI_RUNNER_OS: ${{ runner.os }}
+      CI_RUNNER_ARCH: ${{ runner.arch }}
+      RUSTUP_AUTO_INSTALL: '0'
+      CARGO_NET_OFFLINE: 'true'
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Runtime preflight and exact source/toolchain
+        run: python3 scripts/ci_preflight.py
+      - name: Contract documentation validation
+        run: python3 scripts/agent_sync.py --check
+      - name: Offline tests and build on selected qualified route
+        run: python3 scripts/ci_product.py

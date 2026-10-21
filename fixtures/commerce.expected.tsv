@@ -1,0 +1,3 @@
+S1	invoice	invoice	reservation	synthetic	offline	credit	6	slot-tick	20	0	0	13	7	0	0	7	20	10	offer-v1
+S1	credit	credit-note	invoice	7	paid	external-credit
+S1	outbox	collection	invoice	20	paid	external-payment
