@@ -1,7 +1,11 @@
 # Bounded typed commerce reference
 
-Status: **IMPLEMENTED_UNVERIFIED**. Product execution and independent review:
-**NOT_RUN**. Campaign: `apocryph-compute-20261021`; order: `353c85212ea6`.
+Historical authoring status: **IMPLEMENTED_UNVERIFIED**, product execution and
+independent review **NOT_RUN**, campaign `apocryph-compute-20261021`, order
+`353c85212ea6`. The [2026-10-22 external qualification note](EXPERIMENTS.md#external-qualification-note-2026-10-22)
+records coordinator-observed results for exact source `72a210049f8254fce5a97191854046d56c5bc43a`.
+The current compatibility/documentation maintenance preserves these semantics and
+witnesses; its changed CI helpers require new independent review and execution.
 Restored own candidate `a942d815ca441f48f988754cc39b55fe951d3885` with `git archive`.
 This is new original Apache-2.0 source, not a retry of order 38eb5bec0b67.
 Legacy admission/metering/settlement/policy APIs and 30 regression witnesses remain
@@ -263,7 +267,9 @@ The synthetic fixture hand-derives ten accepted slot-ticks * 2 minor/slot-tick =
 collects 20 by assertion, permanently credits/refunds 7 and closes exposure at 13.
 `fixtures/commerce.expected.tsv` is the exact expected summary; `commerce_smoke.py`
 checks a second process replay leaves journal bytes unchanged and malformed input
-fails. The expected fixture was authored here, not independently reviewed or run.
+fails. At original authoring the expected fixture had not been independently
+reviewed or run; the dated qualification note records the later coordinator
+observation without changing fixture bytes or promoting the new CI helpers.
 External bridge preparation belongs to the coordinator; this worker inspected no
 other simulator or private integration.
 

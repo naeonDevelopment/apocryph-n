@@ -5,7 +5,9 @@ bounded typed-commerce API, local journal, permanent accounting credits and offl
 wire contract (C01–C08, IMPLEMENTED_UNVERIFIED). Descriptions below of absent typed
 lineage, credit or durable-log mechanisms describe the preserved legacy baseline;
 external authentication, legal finality and distributed recovery remain absent.
-All product execution remains NOT_RUN. This note changes no principle or claim.
+The original NOT_RUN record is historical; see the [2026-10-22 external
+qualification note](EXPERIMENTS.md#external-qualification-note-2026-10-22) for exact-source
+evidence. This maintenance candidate remains NOT_RUN; broader claims are unchanged.
 
 Pure Rust 2021, standard library only, `#![forbid(unsafe_code)]`. No persistence,
 cryptographic verification, service runtime or business-effect authority. Public
@@ -115,8 +117,9 @@ revocation check, runtime measurement or binding to workload code/keys. Selectio
 returns a borrowed advisory offer; it creates no reservation or capacity decrement.
 
 A complete construction example is in README; all constructors in
-`tests/regression.rs` supply the new fields. The API is a private local v0.1 source
-reference; compilation and product tests have not been executed.
+`tests/regression.rs` supply the new fields. The API is part of the public local v0.1
+foundation. The dated qualification note above scopes the coordinator-observed
+original-source tests; it does not validate the new maintenance helpers.
 
 ## Depletion
 

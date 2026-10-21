@@ -176,3 +176,62 @@ physical-control, simulator-calibration or commercial requirements. E18 maps the
 new named witnesses and independent evidence still required. The canonical
 contract change grants only this campaign's independent coordinator review and
 qualified manual fleet CI; no worker execution or self-approval is authorized.
+
+## Campaign compatibility and public foundation review (2026-10-22)
+
+Maintenance order f6bfe2f78105 started clean at exact own source
+`72a210049f8254fce5a97191854046d56c5bc43a`; restoration was already satisfied.
+M01–M03 record corrections; Q01 records the coordinator's scoped external
+qualification in [EXPERIMENTS](EXPERIMENTS.md#external-qualification-note-2026-10-22).
+Historical NOT_RUN authoring records above are preserved. This maintenance has
+no product execution receipt and grants no source/checker acceptance.
+
+- M01 / P01 P02 P10: the workflow required undeclared self-hosted/Linux labels
+  and used runner expressions at job-level env, which GitHub rejects before
+  execution. Use the selected route alone and GitHub runtime runner variables.
+  Retain actual Linux/architecture, campaign and exact clean-commit checks.
+- M02 / P01 P02 P09 P10: the dedicated image has standalone Rust/Cargo 1.99.1,
+  while the helper required rustup and did not verify cargo's release/host.
+  Resolve both installed binaries, reject proxies, verify both verbose versions
+  against the exact pin/host, and pass the verified paths to offline execution.
+  No toolchain installation, alias or network dependency is introduced.
+- M03 / P01 P02 P06 P10: there was no explicit independent-checker review gate,
+  and private-only documentation blocked standalone public contributions.
+  Add the default-false manual gate and document the public Apache foundation,
+  contributor offline feedback, conditional private vulnerability reporting and
+  commercial/operator boundary. Skips never count as passes. The coordinator
+  attests review; the boolean does not itself prove review or authorize deployment.
+
+The positive/negative compatibility witnesses are specified in CI-RUNNERS and
+remain unexecuted: matching reviewed inputs and both installed versions should
+reach offline tests; false review/wrong campaign skips, and wrong route/host,
+version or source rejects. The supported domain is the qualified trusted campaign
+image, not arbitrary PATHs, hostile runners or another fleet. Static syntax and
+structure checks are separate evidence; new manual owner-fleet CI remains needed.
+
+Static disclosure and consistency inspection covered commerce source, its 14
+witnesses, synthetic TSV fixtures and the unchanged smoke. Original Apache source
+and synthetic labels are retained; no literal owner paths, credentials, operator
+secrets, private imports or proprietary build dependencies were found in this
+checkout review. This is a scoped static review, not a security audit or license
+for referenced research candidates. Commerce still trusts external evidence IDs
+and physical-resource labels; local lock/fsync assumptions do not provide
+hostile-filesystem security, distributed fencing, authenticated acceptance or
+payment finality. No semantic defect requiring a core change was found within
+this maintenance scope. All Rust APIs, source, tests and fixture bytes remain intact.
+
+Actual maintenance checks (2026-10-22): `agent_sync.py` generation and `--check`
+passed; Python AST parsing passed for all scripts without importing or executing
+the product helpers; both registers parsed with consistent column counts and
+unique IDs (46 improvement rows and 10 principle rows). YAML parsing and static
+workflow assertions confirmed manual-only dispatch, the default-false review gate,
+exact campaign, route-only scheduling, runtime-context placement, read-only
+permissions and no artifact upload. Helper AST inspection confirmed the verified
+cargo variable and offline argument. Local documentation targets resolved; a
+checkout text scan found no literal owner paths or selected credential signatures.
+These are syntax/structure observations, not GitHub dispatch validation or a
+security audit. `git diff --check` and the explicit scan including new documents
+found no whitespace errors. Own-object comparison against the exact baseline
+confirmed no changes to src/, tests/, fixtures/, Cargo.toml, LICENSE, COPYRIGHT,
+AUTHORS.md, commerce_smoke.py or agent_sync.py. No product command, CI dispatch,
+remote/fleet operation, commit or release acceptance was performed by this worker.

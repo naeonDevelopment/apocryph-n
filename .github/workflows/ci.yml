@@ -16,24 +16,30 @@ on:
         default: apocryph-compute-20261021
         required: true
       rust_toolchain:
-        description: Coordinator-qualified installed exact Rust release (for example 1.85.1)
-        type: string
+        description: Qualified standalone Rust release already installed in the image
+        type: choice
+        options:
+          - '1.99.1'
+        default: '1.99.1'
+        required: true
+      judge_surfaces_reviewed:
+        description: Coordinator independently reviewed this exact source and checker
+        type: boolean
+        default: false
         required: true
 permissions:
   contents: read
 jobs:
   reference:
-    runs-on: [self-hosted, Linux, '${{ inputs.route }}']
+    if: ${{ inputs.judge_surfaces_reviewed == true && inputs.campaign == 'apocryph-compute-20261021' }}
+    runs-on: ${{ inputs.route }}
     timeout-minutes: 20
     env:
       CI_ROUTE: ${{ inputs.route }}
       CI_CAMPAIGN: ${{ inputs.campaign }}
       QUALIFIED_RUST_TOOLCHAIN: ${{ inputs.rust_toolchain }}
       CI_SOURCE_SHA: ${{ github.sha }}
-      CI_RUNNER_ENVIRONMENT: ${{ runner.environment }}
-      CI_RUNNER_OS: ${{ runner.os }}
-      CI_RUNNER_ARCH: ${{ runner.arch }}
-      RUSTUP_AUTO_INSTALL: '0'
+      CI_JUDGE_SURFACES_REVIEWED: ${{ inputs.judge_surfaces_reviewed }}
       CARGO_NET_OFFLINE: 'true'
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262

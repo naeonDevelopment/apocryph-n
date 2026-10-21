@@ -5,19 +5,21 @@ bounded typed-commerce API, local journal, permanent accounting credits and offl
 wire contract (C01–C08, IMPLEMENTED_UNVERIFIED). Descriptions below of absent typed
 lineage, credit or durable-log mechanisms describe the preserved legacy baseline;
 external authentication, legal finality and distributed recovery remain absent.
-All product execution remains NOT_RUN. This note changes no principle or claim.
+The original NOT_RUN records are preserved; the [dated external qualification
+note](EXPERIMENTS.md#external-qualification-note-2026-10-22) scopes subsequent evidence.
+This note changes no principle or broader research claim.
 
-This is the completion boundary for private local v0.1.0 source, not production
+This is the completion boundary for the public v0.1.0 foundation, not production
 acceptance. [IMPROVEMENTS.csv](../registers/IMPROVEMENTS.csv) alone owns change
-status. Existing modules are unverified source; every product experiment is
-NOT_RUN. No next-stage spending, disclosure, deployment or external effect is
+status. The new maintenance candidate remains NOT_RUN. No next-stage spending, disclosure, deployment or external effect is
 authorized by this roadmap.
 
-1. **Qualify the existing reference.** Resolve the candidate amd64 versus reported
-   older ARM fleet discrepancy with the owner, enroll an authorized repository
-   route and establish offline toolchain/isolation/cleanup evidence. Only then
-   manually run the existing self-hosted workflow. Record compilation and all 30
-   regression outcomes, including failures. Add the independent numerical oracle
+1. **Qualify the maintenance candidate.** Preserve the coordinator-observed
+   qualification of the exact original commerce source. Independently review the
+   corrected helpers/workflow, then obtain a new manual qualified-fleet receipt
+   for the maintenance commit, including all 30 legacy and 14 commerce witnesses
+   and CLI replay. ARM64 qualification does not establish amd64 support; keep the
+   default route and no-fallback policy. Add the independent numerical oracle
    and boundary traces from E10 after the base fixtures can be measured.
 2. **Design durable settlement and ingestion.** Prioritize stable business IDs,
    typed contract/attempt/acceptance/invoice lineage, transactional exposure
@@ -82,8 +84,8 @@ are extended, not replaced, by distinct N01–N11 obligations explained in
    physical loop. B08 still requires qualified funded operations.
 4. Agree versioned Scenario/Decision/Attempt/AcceptedUsage/EventTrace/RunManifest
    boundaries with the separately prepared general-purpose compute-cluster-sim
-   project (N09). Its initial source is unqualified; no runtime dependency or
-   adapter exists. Future pure policy integration must pass causality, bounds,
+   project (N09). Its separately reported source qualification does not qualify
+   integration here; no runtime dependency or adapter exists. Future pure policy integration must pass causality, bounds,
    conservation, replay and censoring conformance before calibrated E17 comparisons
    (N11). Specialist backends are optional future integrations, not timing models
    to rebuild here. No simulator or sibling source work is authorized by this order.

@@ -1,9 +1,27 @@
 #!/usr/bin/env python3
 """Fail-closed campaign preflight. Does not enroll, install or select fallback runners."""
 import os
+from pathlib import Path
 import platform
 import re
+import shutil
 import subprocess
+
+
+def installed_binary(name, release, host):
+    found = shutil.which(name)
+    if found is None:
+        raise SystemExit(f'{name} is not installed')
+    binary = Path(found).resolve(strict=True)
+    if binary.name == 'rustup':
+        raise SystemExit('standalone Rust binaries required; rustup proxies denied')
+    version = subprocess.check_output([str(binary), '-Vv'], text=True)
+    fields = version.splitlines()
+    if (fields.count(f'release: {release}') != 1
+            or fields.count(f'host: {host}') != 1):
+        raise SystemExit(f'{name} release or host does not match qualification')
+    print(f'{name}: {binary}\n{version}', end='', flush=True)
+    return str(binary)
 
 
 def verify():
@@ -11,14 +29,16 @@ def verify():
     route = os.environ['CI_ROUTE']
     if route not in routes or os.environ['CI_CAMPAIGN'] != 'apocryph-compute-20261021':
         raise SystemExit('unqualified route or campaign')
+    if os.environ.get('CI_JUDGE_SURFACES_REVIEWED') != 'true':
+        raise SystemExit('independent source/checker review is required')
     arch, machine = routes[route]
-    if (os.environ['CI_RUNNER_ENVIRONMENT'] != 'self-hosted'
-            or os.environ['CI_RUNNER_OS'] != 'Linux' or platform.system() != 'Linux'
-            or os.environ['CI_RUNNER_ARCH'] != arch or platform.machine() != machine):
+    if (os.environ['RUNNER_ENVIRONMENT'] != 'self-hosted'
+            or os.environ['RUNNER_OS'] != 'Linux' or platform.system() != 'Linux'
+            or os.environ['RUNNER_ARCH'] != arch or platform.machine() != machine):
         raise SystemExit('self-hosted/Linux/architecture preflight failed')
     toolchain = os.environ['QUALIFIED_RUST_TOOLCHAIN']
-    if not re.fullmatch(r'[0-9]+\.[0-9]+\.[0-9]+', toolchain):
-        raise SystemExit('an exact installed stable release is required; aliases denied')
+    if toolchain != '1.99.1':
+        raise SystemExit('only the qualified standalone release 1.99.1 is allowed')
     sha = os.environ['CI_SOURCE_SHA']
     if not re.fullmatch(r'[0-9a-f]{40}', sha):
         raise SystemExit('invalid source revision')
@@ -27,16 +47,10 @@ def verify():
         raise SystemExit('source revision mismatch or dirty checkout')
     print(f'campaign={os.environ["CI_CAMPAIGN"]} route={route} revision={actual}', flush=True)
     print(f'runner={os.environ.get("RUNNER_NAME", "unknown")} os={platform.platform()} arch={machine}', flush=True)
-    installed = subprocess.check_output(['rustup', 'toolchain', 'list'], text=True)
-    # rustup run with no --install flag never installs a missing toolchain.
-    if not any(line.split()[0] == toolchain or line.split()[0].startswith(toolchain + '-') for line in installed.splitlines() if line.split()):
-        raise SystemExit('qualified toolchain is not installed')
-    version = subprocess.check_output(['rustup', 'run', toolchain, 'rustc', '-Vv'], text=True)
-    if f'release: {toolchain}\n' not in version or f'host: {machine}-unknown-linux-gnu\n' not in version:
-        raise SystemExit('toolchain version or host does not match qualification')
-    print(version, end='', flush=True)
-    subprocess.run(['rustup', 'run', toolchain, 'cargo', '-Vv'], check=True)
-    return toolchain
+    host = f'{machine}-unknown-linux-gnu'
+    rustc = installed_binary('rustc', toolchain, host)
+    cargo = installed_binary('cargo', toolchain, host)
+    return rustc, cargo
 
 if __name__ == '__main__':
     verify()

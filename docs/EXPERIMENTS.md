@@ -1,16 +1,19 @@
 # Apocryphⁿ experiment plan
 
-Every experiment below is **NOT_RUN**. No Rust compilation, test, benchmark,
+Historical plan status at original source authoring: every experiment below was
+**NOT_RUN**. Preserve those records; the dated external note below adds evidence
+only for its exact source. This maintenance candidate remains NOT_RUN.
+No Rust compilation, test, benchmark,
 upstream reproduction, live service measurement or CI execution occurred in this
 completion. Test source is an executable specification, not a result. Validation
 fields in [IMPROVEMENTS.csv](../registers/IMPROVEMENTS.csv) remain NOT_RUN; that CSV
 is the sole change-status authority. Structure and whitespace checks are separate.
 
-Product execution may occur only after qualification on the owner's self-hosted
-fleet. The candidate label `naevum-vps-amd64` conflicts with the supplied older ARM
-live-fleet report. There is no enrolled route or remote configured by this stage.
-See [CI-RUNNERS](development/CI-RUNNERS.md). Never substitute a hosted runner or an
-ad-hoc local cargo invocation.
+Agent product execution and release acceptance require qualified owner-fleet
+receipts. Historical route uncertainty is updated by the scoped external note;
+see [CI-RUNNERS](development/CI-RUNNERS.md). Independent contributors may run pure
+offline tests on their own systems under [CONTRIBUTING](../CONTRIBUTING.md); this
+does not authorize agent execution or substitute for release acceptance.
 
 [Selected P01–P10 principles](SCIENTIFIC-PRINCIPLES.md) govern this plan;
 [SCIENCE.csv](../registers/SCIENCE.csv) maps applicability without owning fix status.
@@ -276,3 +279,29 @@ possible I/O outcomes but is not a power-loss receipt. Any duplicate external ef
 credited debt resurrection, unqualified local execution or unsupported assurance
 claim falsifies the corresponding integration claim. Preserve failures and keep
 statuses unverified until scoped external receipts are recorded.
+
+## External qualification note (2026-10-22)
+
+Coordinator-observed evidence supplied to maintenance order f6bfe2f78105:
+exact original commerce source `72a210049f8254fce5a97191854046d56c5bc43a` passed
+`cargo test --offline` (14 commerce plus 30 retained tests), `cargo build --offline`
+and actual CLI fixture/restart/replay on qualified owner Linux ARM64 with standalone
+Rust/Cargo 1.99.1. This worker did not execute those commands, access private
+qualification material or independently reproduce the observation. Q01 in the
+register records that attribution; historical NOT_RUN rows above and C01–C08
+remain as authored rather than being silently overwritten.
+
+This observation is limited to the named source and environment. It does not
+qualify amd64, other toolchains, physical power loss, hostile storage, authenticated
+external assertions, legal accounting, a deployed service or the research roadmap.
+The coordinator also reported external qualification of a paired simulator; no
+sibling files or private fixtures were read, and no simulator result is used here
+to qualify commerce or assert integration readiness.
+
+The malformed draft workflow was disabled pending correction. This maintenance
+source changes workflow/toolchain compatibility and documentation only; original
+Rust source, tests, fixtures and smoke semantics are preserved. A new actual manual
+CI run of the maintenance commit and independent source/checker review remain
+required. Runtime helper positive/negative witnesses in
+[CI-RUNNERS](development/CI-RUNNERS.md) remain NOT_RUN. Static documentation checks
+are neither checker acceptance nor product qualification.

@@ -5,7 +5,9 @@ bounded typed-commerce API, local journal, permanent accounting credits and offl
 wire contract (C01–C08, IMPLEMENTED_UNVERIFIED). Descriptions below of absent typed
 lineage, credit or durable-log mechanisms describe the preserved legacy baseline;
 external authentication, legal finality and distributed recovery remain absent.
-All product execution remains NOT_RUN. This note changes no principle or claim.
+The original NOT_RUN record is historical; see the [2026-10-22 external
+qualification note](EXPERIMENTS.md#external-qualification-note-2026-10-22) for exact-source
+evidence. This maintenance candidate remains NOT_RUN; broader claims are unchanged.
 
 These selected engineering requirements derive from the owner-supplied design
 reference for this task. Apocryphⁿ selects an auditable deterministic kernel below
@@ -17,8 +19,9 @@ were not independently fetched or reviewed during this work.
 
 [SCIENCE.csv](../registers/SCIENCE.csv) maps every principle to actual APIs,
 witnesses, assumptions and gaps. [IMPROVEMENTS.csv](../registers/IMPROVEMENTS.csv)
-alone owns fix status. All product execution is **NOT_RUN**; the CI route remains
-**UNMEASURED**. [Experiments](EXPERIMENTS.md) define future evidence requirements.
+alone owns fix status. [Experiments](EXPERIMENTS.md) preserve historical NOT_RUN
+records and the scoped coordinator observation. [CI routing](development/CI-RUNNERS.md)
+distinguishes measured original-source support from pending maintenance validation.
 
 ## P01 — Specify transitions and replay boundaries
 

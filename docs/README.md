@@ -17,13 +17,19 @@ Each scope has one current authority; links elsewhere explain or route to it.
 | Preregistered experiment procedures and results | [EXPERIMENTS](EXPERIMENTS.md) |
 | Future product scope | [ROADMAP](ROADMAP.md) |
 | Runner qualification and CI route | [CI-RUNNERS](development/CI-RUNNERS.md) |
+| Public contributor workflow | [CONTRIBUTING](../CONTRIBUTING.md) |
+| Safe vulnerability reporting | [SECURITY](../SECURITY.md) |
 | Provenance | [ORIGINS](../ORIGINS.md) |
 
 `AGENTS.md` and `CLAUDE.md` are generated pointers, not alternative contracts.
 IMPROVEMENTS.csv is the sole change-status authority; SCIENCE.csv maps principle applicability only. EXPERIMENTS specifies planned
-procedures; every experiment remains NOT_RUN and register validation fields agree. README's verification warning is a repository-wide boundary.
+procedures and the [dated external qualification note](EXPERIMENTS.md#external-qualification-note-2026-10-22).
+Historical NOT_RUN fields remain historical; the new maintenance candidate has no
+execution receipt. README's verification boundary applies repository-wide.
 
-This private local v0.1.0 source preserves 30 legacy regression specifications and adds commerce witnesses, none executed.
+This public v0.1.0 foundation preserves 30 legacy and 14 commerce witnesses.
+Their exact original-source qualification is attributed to the coordinator, not
+this worker or the changed CI helpers.
 Read FIXES for A01–A10, explicit billing-unit/age/challenge checks and business
 limitations; RESEARCH and THREAT-MODEL separate local assertions from runtime proof.
 No marketplace, hardware verifier or durable service is implied by the API.

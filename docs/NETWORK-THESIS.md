@@ -134,7 +134,8 @@ site qualification; N04 adds control-plane and correlated-domain behavior tests.
 Recovery requires verified replicas, funded retention and recoverable keys (B07/A08);
 `Retain` supplies none of those guarantees.
 
-Manna is an optional, separately qualified proprietary integration. No Manna runtime,
+Manna is an optional proprietary integration candidate requiring separate
+qualification. No Manna runtime,
 source or terms are required for network participation, scheduling, settlement or
 simulation. The network and independent simulator must remain useful without it.
 No proprietary configuration, source imports or licence changes are selected.
