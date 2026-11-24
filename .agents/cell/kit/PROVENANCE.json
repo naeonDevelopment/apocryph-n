@@ -1,0 +1,16 @@
+{
+ "source": "Naevum/agent-kit cell/kit",
+ "commit": "5f3e223ccd06ec7ef57048568cfa55f115864465",
+ "files": {
+  "policy.py": "f89b36ac49761ceceef2578d50cb41f368766808f31f9620afe209a68ea25a9f",
+  "guard.py": "ac8f56eaac20bc314f9d5aa33c761f49c07708e75788d32297ec4318a56beb7c",
+  "cell.py": "2d7cb32395bc4986d3b12f73f47e0de6fe9f1f87799b05083ec39ca4eaf0eb1e",
+  "tools.json": "f7928e2002fcbd52dc5d8e29053d2e3b13dede89148b944992e41e5d09410583",
+  "pulse.schema.json": "854700fc35313ae47a7c95693bef78c2f8feeb5d6979cd7f9cded612a4614c4b",
+  "programs/gates/SKILL.md": "11a4cadb917b910aeed19a20e347c85c1da10189a1b7f84893e2371fd507e902",
+  "programs/review/SKILL.md": "a35ce5432fe6a19968742252be5b30c7833783553a8feccaaea755e2ccea13f0",
+  "programs/ship/SKILL.md": "0079a9afaead12a19681be63959ac98c2196510d9100a830467935714ca54e57",
+  "programs/start/SKILL.md": "78cdcd2eb7f31a8555ded645859aa5828f7b6a53718096434651fb8cc6ec62a7"
+ },
+ "note": "Vendored by copy. Change it in agent-kit and re-vendor; a local edit fails `cell.py conform`."
+}

@@ -49,5 +49,7 @@ jobs:
         run: python3 scripts/ci_preflight.py
       - name: Contract documentation validation
         run: python3 scripts/agent_sync.py --check
+      - name: Agent cell conformance (documentation and guard canaries; not product verification)
+        run: python3 .agents/cell/kit/cell.py conform
       - name: Offline tests and build on selected qualified route
         run: python3 scripts/ci_product.py
