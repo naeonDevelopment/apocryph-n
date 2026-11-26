@@ -1,0 +1,29 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/.agents/cell/kit/guard.py\" --host claude",
+            "timeout": 10,
+            "onFailure": "block"
+          }
+        ]
+      }
+    ]
+  },
+  "sandbox": {
+    "filesystem": {
+      "denyWrite": [
+        "./.claude",
+        "./.codex",
+        "./.agents",
+        "./.git/config",
+        "./.git/hooks",
+        "./.mcp.json"
+      ]
+    }
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "schema": "cell/1",
+  "repository": "naeonDevelopment/apocryph-n",
+  "holder": "naevum",
+  "tier": "C",
+  "default_branch": "main",
+  "gates": ["python3 scripts/agent_sync.py --check", "git diff --check", "python3 .agents/cell/kit/cell.py conform"],
+  "state_check": null,
+  "compiler": {"kind": "agent_sync", "check": "python3 scripts/agent_sync.py --check"},
+  "registers": {"improvements": "registers/IMPROVEMENTS.csv", "science": "registers/SCIENCE.csv", "fixes": "docs/FIXES.md"},
+  "flow": {"max_open_agent_prs": 3},
+  "policy": {
+    "protected": [
+      {"glob": "registers/*.csv", "reason": "sole change-status authority: propose the row in the handoff; Vagus or the owner writes it"},
+      {"glob": "AUTHORS.md", "reason": "attribution record: changed only by the owner"},
+      {"glob": "ORIGINS.md", "reason": "origin attribution record: changed only by the owner"}
+    ],
+    "protected_existing": [],
+    "generated": ["AGENTS.md", "CLAUDE.md", ".claude/skills/**", ".agents/skills/**"],
+    "deny_commands": [
+      {"pattern": "\\bgit\\b.*\\bcommit\\b", "code": "contract-no-agent-commit", "reason": "agents do not commit here; Vagus commits the work (agent/contract.md)"},
+      {"pattern": "\\bgit\\b.*\\bpush\\b", "code": "contract-no-push", "reason": "no push from agents (agent/contract.md)"},
+      {"pattern": "\\bcargo\\s+(?:build|test|run|bench|install|publish|check|clippy)\\b|scripts/(?:ci_product|commerce_smoke)\\.py", "code": "contract-no-local-build", "reason": "product build and test run only on the qualified fleet (agent/contract.md)"},
+      {"pattern": "\\brustup\\b", "code": "contract-no-toolchain", "reason": "no toolchain downloads or rustup (agent/contract.md)"},
+      {"pattern": "\\bgh\\s+(?:workflow\\s+run|run\\s+rerun)\\b", "code": "contract-no-ci-dispatch", "reason": "manual CI is dispatched by the coordinator after independent review"}
+    ],
+    "mcp_reads": [],
+    "tools": {}
+  },
+  "canaries": {
+    "protected_writes": ["registers/IMPROVEMENTS.csv", "AUTHORS.md", "ORIGINS.md", "AGENTS.md"],
+    "deny_commands": [
+      "git commit -m x",
+      "git push origin cell/x",
+      "cargo test --offline",
+      "rustup toolchain install stable",
+      "gh workflow run ci.yml -f route=naevum-vps-amd64"
+    ],
+    "mcp_reads": []
+  }
+}

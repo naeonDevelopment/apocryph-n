@@ -5,7 +5,8 @@ Canonical authority for agent work in this repository. Apocryphⁿ is ASCII
 
 - Edit only this dated worktree; preserve existing dirt. No sibling, global-history,
   private-memory or owner-only naevum/wavecut reads. No upstream source copying.
-- No commits by agents: Vagus commits the resulting work with Assisted-by trailers.
+- No commits by agents: Vagus commits the resulting work. No AI attribution in
+  commits: no `Assisted-by:` or model `Co-Authored-By` trailer (owner rule).
   No remote changes, contacts, push, merge, deployment, spending or live effects.
 - Model output never grants general AI business effect authority. No default
   credentials, wallet/provider/network actions or arbitrary tool/shell runtime.
@@ -35,6 +36,14 @@ Canonical authority for agent work in this repository. Apocryphⁿ is ASCII
   models permanent credits without claiming legal validity.
 - Native entrypoints are compiled by `python3 scripts/agent_sync.py`; validate
   with `python3 scripts/agent_sync.py --check`. Update this contract first.
+- The agent cell (`.agents/cell/cell.json`, kit vendored from Naevum/agent-kit)
+  registers one pre-tool guard for Claude Code and Codex. It refuses edits to
+  `registers/*.csv`, `AUTHORS.md`, `ORIGINS.md` and generated entrypoints, agent
+  commits and pushes, local `cargo` builds and tests, `rustup` and CI dispatch.
+  Propose register rows in the handoff; Vagus or the owner writes them. Programs
+  `start`, `gates`, `review` and `ship` are in `.claude/skills/` and
+  `.agents/skills/`. `python3 .agents/cell/kit/cell.py conform` validates the cell;
+  it is a documentation check, not product verification.
 
 ## Scientific change discipline (normative)
 

@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "cell.pulse/1",
+  "title": "A repository cell's generated status record",
+  "description": "Generated, never written by hand. Contains no source, no customer data and no secret. A field that could not be measured is absent and named in `unmeasured`; absent is never zero.",
+  "type": "object",
+  "required": ["schema", "generated_at", "mode", "identity", "health", "flow", "blocked", "decisions_needed", "changes", "lessons", "unmeasured"],
+  "properties": {
+    "schema": {"const": "cell.pulse/1"},
+    "generated_at": {"type": "string", "format": "date-time"},
+    "mode": {"enum": ["local", "forge"]},
+    "identity": {
+      "type": "object",
+      "required": ["repository", "holder", "tier", "default_branch", "commit"],
+      "properties": {
+        "repository": {"type": "string"}, "holder": {"type": "string"}, "tier": {"enum": ["A", "B", "C", "none"]},
+        "default_branch": {"type": "string"}, "commit": {"type": ["string", "null"]}
+      }
+    },
+    "health": {
+      "type": "object",
+      "properties": {
+        "state_fresh": {"type": "boolean"},
+        "ci": {"type": "array", "items": {"type": "object", "required": ["workflow", "conclusion", "at"]}}
+      }
+    },
+    "flow": {
+      "type": "object",
+      "properties": {
+        "open": {"type": "integer"}, "draft": {"type": "integer"},
+        "oldest_open_days": {"type": ["number", "null"]},
+        "unreviewed_open": {"type": "integer"},
+        "oldest_unreviewed_days": {"type": ["number", "null"]},
+        "merged_14d": {"type": "integer"}, "merged_without_review_14d": {"type": "integer"}
+      }
+    },
+    "blocked": {"type": "array", "items": {"type": "object", "required": ["ref", "title", "age_days"]}},
+    "decisions_needed": {"type": "array", "items": {"type": "object", "required": ["ref", "title", "age_days"]}},
+    "changes": {"type": "object", "properties": {"commits_7d": {"type": "integer"}, "files_changed_7d": {"type": "integer"}}},
+    "lessons": {"type": "array", "items": {"type": "string"}, "description": "register paths changed in the last 7 days"},
+    "unmeasured": {"type": "array", "items": {"type": "string"}},
+    "forge_error": {"type": "string"}
+  }
+}
