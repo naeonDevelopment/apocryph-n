@@ -1,6 +1,6 @@
 ---
-name: gates
-description: Run this repository's release-blocking checks exactly as CI runs them and report each result honestly. Use before any commit you intend to push, and whenever someone asks whether a change is ready.
+name: "gates"
+description: "Run this repository's release checks exactly as CI does and report each result; only exit 0 is a pass."
 ---
 
 # gates — the checks CI runs, run the same way

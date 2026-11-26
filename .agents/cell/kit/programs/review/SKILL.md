@@ -1,6 +1,6 @@
 ---
-name: review
-description: Independent review of a diff in a fresh context. Use before opening or merging a pull request, for any change that touches a protected path, a policy or an evaluator, and whenever the author is an agent.
+name: "review"
+description: "Independent fresh-context review of a diff, with a verdict bound to the head commit."
 ---
 
 # review — a second pair of eyes that did not write the code

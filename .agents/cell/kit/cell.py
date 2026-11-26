@@ -47,7 +47,15 @@ CODEX_HOOK = {
                 "rc=$?; [ \"$rc\" -eq 0 ] || { [ \"$rc\" -eq 2 ] || echo 'BLOCKED: cell guard failed' >&2; exit 2; }"),
     "timeout": 10,
 }
-SANDBOX_WRITE_DENY = [".claude", ".codex", ".agents", ".git/config", ".git/hooks", ".mcp.json"]
+# The enforcement layer, not the programs: compilers must still be able to write .claude/skills and .agents/skills.
+SANDBOX_WRITE_DENY = [".claude/settings.json", ".claude/hooks", ".codex", ".agents/cell", ".git/config", ".git/hooks", ".mcp.json"]
+NOTES: list[str] = []  # observations that are not findings (another hook's refusal of a control, say)
+
+
+def sandbox_covered(path: str, entries: list[str]) -> bool:
+    norm = [e[2:] if e.startswith("./") else e for e in entries]
+    norm = [e.rstrip("/") for e in norm]
+    return any(path == e or path.startswith(e + "/") for e in norm)
 
 ATTRIBUTION = [
     re.compile(r"^\s*co-authored-by:.*\b(claude|anthropic|openai|codex|gpt|gemini|copilot|cursor|chatgpt)\b", re.I | re.M),
@@ -106,8 +114,10 @@ def _claude_pre_hooks(root: Path) -> list[tuple[str, str]]:
     for group in data.get("hooks", {}).get("PreToolUse", []):
         for h in group.get("hooks", []):
             if h.get("type") == "command":
-                out.append((group.get("matcher", ""), h["command"] if not h.get("args") else
-                            " ".join([h["command"], *map(shlex.quote, h["args"])]), h))
+                args = [a.replace("${CLAUDE_PROJECT_DIR}", str(root)).replace("$CLAUDE_PROJECT_DIR", str(root))
+                        for a in h.get("args", [])]  # the host substitutes these in exec-form args
+                out.append((group.get("matcher", ""), h["command"] if not args else
+                            " ".join([h["command"], *map(shlex.quote, args)]), h))
     return out
 
 
@@ -139,14 +149,15 @@ def _matches(matcher: str, tool: str) -> bool:
         return matcher == tool
 
 
-def run_hooks(root: Path, host: str, tool: str, tool_input: dict) -> tuple[str, list[int]]:
-    """Run every registered PreToolUse command for `tool` as the host would. Returns (deny|defer, exits)."""
+def run_hooks(root: Path, host: str, tool: str, tool_input: dict) -> tuple[str, list[int], str, bool]:
+    """Run every registered PreToolUse command for `tool` as the host would.
+    Returns (verdict of all hooks, exits, verdict of the cell guard alone, whether another hook denied)."""
     hooks = _claude_pre_hooks(root) if host == "claude" else _codex_pre_hooks(root)
     event = json.dumps({"hook_event_name": "PreToolUse", "session_id": "cell-conform", "cwd": str(root),
                         "tool_name": tool, "tool_input": tool_input}).encode()
     env = dict(os.environ, CLAUDE_PROJECT_DIR=str(root))
     env.pop("CODEX_HOME", None)
-    verdict, exits = "defer", []
+    verdict, exits, cell_verdict, other = "defer", [], "defer", False
     for matcher, command, spec in hooks:
         if not _matches(matcher, tool):
             continue
@@ -166,7 +177,11 @@ def run_hooks(root: Path, host: str, tool: str, tool_input: dict) -> tuple[str, 
             denied = True
         if denied:
             verdict = "deny"
-    return verdict, exits
+            if "cell/kit/guard.py" in command:
+                cell_verdict = "deny"
+            else:
+                other = True
+    return verdict, exits, cell_verdict, other
 
 
 # ------------------------------------------------------------------ conformance
@@ -199,8 +214,7 @@ def codex_form(tool: str, data: dict) -> tuple[str, dict]:
     if tool == "Bash":
         return "exec_command", {"cmd": data["command"]}
     if tool in ("Edit", "Write"):
-        rel = Path(data["file_path"]).name if False else data["file_path"]
-        return "apply_patch", {"command": f"*** Begin Patch\n*** Update File: {rel}\n@@\n-a\n+b\n*** End Patch"}
+        return "apply_patch", {"command": f"*** Begin Patch\n*** Update File: {data['file_path']}\n@@\n-a\n+b\n*** End Patch"}
     if tool == "Read":
         return "view_image", {"path": data["file_path"]}
     if tool == "AskUserQuestion":
@@ -233,8 +247,14 @@ def conform(root: Path) -> list[dict]:
         if size > 32768:
             add("contract-size", "AGENTS.md", f"{size} bytes exceeds Codex's 32 KiB instruction budget")
         text = agents.read_text(errors="replace")
-        if re.search(r"(use|uses|add|carry|carries|with)\b[^.\n]{0,40}assisted-by", text, re.I):
+        lines = [l for l in text.splitlines() if l.strip() and not l.startswith("<!--")]
+        if len(lines) < 12 and re.search(r"(read|follow|see)[^.\n]{0,60}\(?[\w./-]+\.md\)?", text, re.I):
+            add("contract-pointer", "AGENTS.md", "is a pointer to another file; Codex loads only this file, so the contract never reaches it")
+        for m in re.finditer(r"(use|uses|add|carry|carries|with)\b[^.\n]{0,40}assisted-by", text, re.I):
+            if re.search(r"\b(no|not|never|without)\b", m.group(0), re.I):
+                continue  # "carry no AI attribution: no Assisted-by" is the rule, not a breach
             add("contract-attribution", "AGENTS.md", "instructs an `Assisted-by:` trailer; the portfolio rule is no AI attribution")
+            break
         if re.search(r"co-authored-by:\s*<?model", text, re.I):
             add("contract-attribution", "AGENTS.md", "instructs a model Co-Authored-By trailer")
     if (root / "AGENTS.override.md").exists():
@@ -244,8 +264,8 @@ def conform(root: Path) -> list[dict]:
             add("contract-claude", "CLAUDE.md", "missing: Claude Code reads AGENTS.md only as a fallback that a personal CLAUDE.local.md suppresses")
     elif agents.is_file():
         body = claude.read_text(errors="replace")
-        first = next((l.strip() for l in body.splitlines() if l.strip() and not l.startswith("<!--")), "")
-        if body != agents.read_text(errors="replace") and first != "@AGENTS.md":
+        imports = any(l.strip() == "@AGENTS.md" for l in body.splitlines())
+        if body != agents.read_text(errors="replace") and not imports:
             add("contract-claude", "CLAUDE.md", "neither an identical copy of AGENTS.md nor an `@AGENTS.md` import: Claude gets a different contract or only a link")
 
     # Programs: the same bytes for both hosts.
@@ -285,9 +305,14 @@ def conform(root: Path) -> list[dict]:
                 continue
             for rule, tool, data, expected in canaries(root, cell):
                 t, d = (tool, data) if host == "claude" else codex_form(tool, data)
-                verdict, exits = run_hooks(root, host, t, d)
-                if verdict != expected:
-                    add(rule, f"{host}:{t}", f"expected {expected}, got {verdict} (exits {exits})")
+                verdict, exits, cell_verdict, other = run_hooks(root, host, t, d)
+                if expected == "deny" and verdict != "deny":
+                    add(rule, f"{host}:{t}", f"expected deny, got defer (exits {exits})")
+                elif expected == "defer" and cell_verdict != "defer":
+                    add(rule, f"{host}:{t}", f"the cell guard refused a control (exits {exits})")
+                elif expected == "defer" and other:
+                    NOTES.append(f"{host}:{t}: another registered hook refused control `{rule}` (exits {exits}); "
+                                 "not the cell's finding, but a person would be blocked the same way")
             # Fail-closed: a malformed event must be refused.
             hooks = _claude_pre_hooks(root) if host == "claude" else _codex_pre_hooks(root)
             for _, command, spec in hooks:
@@ -307,7 +332,7 @@ def conform(root: Path) -> list[dict]:
         deny = []
         if settings.is_file():
             deny = json.loads(settings.read_text()).get("sandbox", {}).get("filesystem", {}).get("denyWrite", [])
-        missing = [p for p in SANDBOX_WRITE_DENY if not any(d.rstrip("/").endswith(p) for d in deny)]
+        missing = [p for p in SANDBOX_WRITE_DENY if not sandbox_covered(p, deny)]
         if missing:
             add("sandbox-write-deny", ".claude/settings.json", "sandbox.filesystem.denyWrite lacks " + ", ".join(missing))
 
@@ -324,7 +349,7 @@ def conform(root: Path) -> list[dict]:
 
     # The pulse can be produced.
     try:
-        validate_pulse(build_pulse(root, cell, forge=False))
+        validate_pulse(build_pulse(root, cell, forge=False, run_state=False))
     except Exception as e:  # noqa: BLE001 -- any failure is the finding
         add("pulse", CONFIG, f"pulse could not be built: {e}")
 
@@ -363,7 +388,8 @@ def _days(ts: str, now: dt.datetime) -> float:
     return round((now - dt.datetime.fromisoformat(ts.replace("Z", "+00:00"))).total_seconds() / 86400, 1)
 
 
-def build_pulse(root: Path, cell: dict, forge: bool, rev: str = "HEAD", git_dir: Path | None = None) -> dict:
+def build_pulse(root: Path, cell: dict, forge: bool, rev: str = "HEAD", git_dir: Path | None = None,
+                run_state: bool = True) -> dict:
     """`root` is a checkout; or pass `git_dir` and `rev` (e.g. origin/main) to read history without one."""
     now = dt.datetime.now(dt.timezone.utc)
     unmeasured: list[str] = []
@@ -389,7 +415,7 @@ def build_pulse(root: Path, cell: dict, forge: bool, rev: str = "HEAD", git_dir:
     else:
         unmeasured.append("changes")
     state = cell.get("state_check")
-    if state and not forge and not git_dir:
+    if state and not forge and not git_dir and run_state:
         r = subprocess.run(["/bin/sh", "-c", state], cwd=root, capture_output=True, timeout=600)
         pulse["health"]["state_fresh"] = r.returncode == 0
     elif state:
@@ -492,7 +518,7 @@ def with_claude_hook(settings: dict) -> dict:
     fs = s.setdefault("sandbox", {}).setdefault("filesystem", {})
     deny = fs.setdefault("denyWrite", [])
     for p in SANDBOX_WRITE_DENY:
-        if p not in deny and "./" + p not in deny:
+        if not sandbox_covered(p, deny):
             deny.append("./" + p)
     return s
 
@@ -591,7 +617,7 @@ def attribution(text: str) -> list[str]:
     return [rx.pattern for rx in ATTRIBUTION if rx.search(text)]
 
 
-def vendor(root: Path) -> int:
+def vendor(root: Path, seed: bool = False) -> int:
     dest = root / CELL_DIR / "kit"
     dest.mkdir(parents=True, exist_ok=True)
     files = {}
@@ -602,14 +628,14 @@ def vendor(root: Path) -> int:
         data = (KIT.parent / name).read_bytes() if name.startswith("programs/") else (KIT / name).read_bytes()
         atomic_write(dest / name, data)
         files[name] = sha(data)
-    # Cells compiled by this toolkit get the working programs as sources, unless they already have their own.
-    if (root / "agent/contract.md").is_file():
+    # Only on request: a repository with its own compiler keeps its programs where that compiler reads them.
+    if seed and (root / "agent/contract.md").is_file():
         for p in sorted(programs.rglob("SKILL.md")):
             target = root / "agent/skills" / p.parent.name / "SKILL.md"
             if not target.exists():
                 atomic_write(target, p.read_bytes())
     head = subprocess.run(["git", "-C", str(KIT), "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip()
-    prov = {"source": "Naevum/agent-kit cell/kit", "commit": head or "uncommitted", "files": files,
+    prov = {"source": os.environ.get("CELL_KIT_SOURCE", "agent-kit (cell/kit)"), "commit": head or "uncommitted", "files": files,
             "note": "Vendored by copy. Change it in agent-kit and re-vendor; a local edit fails `cell.py conform`."}
     atomic_write(dest / "PROVENANCE.json", (json.dumps(prov, indent=1) + "\n").encode())
     print(f"vendored {len(files)} files into {dest}")
@@ -682,11 +708,16 @@ def main(argv=None) -> int:
             p.add_argument("--range")
         if name == "probe-codex":
             p.add_argument("--codex-home")
+        if name == "vendor":
+            p.add_argument("--seed-programs", action="store_true")
     a = ap.parse_args(argv)
     root = Path(a.root).resolve() if a.root else Path(git(Path.cwd(), "rev-parse", "--show-toplevel"))
     try:
         if a.cmd == "conform":
-            return report("cell conform", conform(root), a.format)
+            findings = conform(root)
+            for n in NOTES:
+                print("NOTE " + n, file=sys.stderr)
+            return report("cell conform", findings, a.format, {"notes": NOTES} if a.format == "json" else None)
         if a.cmd == "pulse":
             p = build_pulse(root, load_cell(root), forge=a.forge)
             validate_pulse(p)
@@ -720,8 +751,10 @@ def main(argv=None) -> int:
         if a.cmd == "probe-codex":
             return probe_codex(root, a.codex_home)
         if a.cmd == "vendor":
-            return vendor(root)
+            return vendor(root, a.seed_programs)
         if a.cmd == "selftest":
+            if not (KIT.parent / "tests").is_dir():
+                raise NoVerdict("the toolkit's tests are not vendored here; run the selftest in agent-kit")
             r = subprocess.run([sys.executable, "-m", "unittest", "discover", "-s", str(KIT.parent / "tests"), "-q"])
             return 0 if r.returncode == 0 else 1
     except NoVerdict as e:

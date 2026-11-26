@@ -115,6 +115,8 @@ def normalize(root: Path, event: dict) -> Operation:
         if not isinstance(text, str):
             raise Invalid("missing patch")
         return Operation("write", tool, tuple(rel_target(root, cwd, p) for p in patch_paths(text)))
+    if tool == "Monitor" and isinstance(args.get("command"), str):
+        tool, args = "Bash", {"command": args["command"]}  # Monitor runs its command in a shell
     if tool in SHELL_TOOLS:
         command = args.get("command") if "command" in args else args.get("cmd")
         if isinstance(command, list):
@@ -130,7 +132,10 @@ def normalize(root: Path, event: dict) -> Operation:
 def load_policy(root: Path) -> Policy:
     cell = load_json(root / ".agents/cell/cell.json")
     registry = load_json(KIT / "tools.json")
-    return Policy.from_data(cell, registry)
+    policy = Policy.from_data(cell, registry)
+    policy.root = os.path.realpath(str(root))
+    policy.exists = lambda rel: (root / rel).exists()
+    return policy
 
 
 def record(root: Path, host: str, decision: Decision) -> None:

@@ -12,7 +12,7 @@ import fnmatch
 import re
 import shlex
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Sequence, Tuple
+from typing import Callable, Dict, List, Optional, Sequence, Tuple
 
 DENY, DEFER = "deny", "defer"
 
@@ -62,6 +62,8 @@ class Policy:
     deny_commands: List[Tuple[str, str, str]] = field(default_factory=list)  # (regex, code, reason)
     mcp_reads: Tuple[str, ...] = ()
     tools: Dict[str, str] = field(default_factory=dict)  # tool name -> class
+    root: str = ""  # absolute repository root, to read absolute paths in commands
+    exists: Optional[Callable[[str], bool]] = None  # set by the adapter; pure tests leave it None
 
     @classmethod
     def from_data(cls, cell: dict, registry: dict) -> "Policy":
@@ -88,7 +90,9 @@ def _match(path: str, pattern: str) -> bool:
     path, pattern = path.casefold(), pattern.casefold()
     if pattern.endswith("/**"):
         base = pattern[:-3]
-        return path == base or path.startswith(base + "/")
+        parts = path.split("/")
+        # `a/*/b/**` matches `a/x/b` and everything below it: test each leading prefix of the path.
+        return any(fnmatch.fnmatchcase("/".join(parts[:i]), base) for i in range(1, len(parts) + 1))
     return fnmatch.fnmatchcase(path, pattern)
 
 
@@ -116,17 +120,60 @@ def protected_patterns(policy: Policy) -> List[str]:
 # ------------------------------------------------------------------ shell
 
 _SEPARATORS = re.compile(r"(?:&&|\|\||;|\||\n)")
-_READ_ONLY = re.compile(r"^(?:cat|head|tail|less|rg|grep|ls|wc|stat|file|git\s+(?:diff|show|status|log|blame))\b")
+_READ_ONLY = re.compile(r"^(?:cat|head|tail|less|more|rg|grep|egrep|fgrep|ls|wc|stat|file|diff|cmp|jq|"
+                        r"sha256sum|shasum|md5|md5sum|git\s+(?:diff|show|status|log|blame|ls-files|check-ignore|"
+                        r"add|stage|grep|rev-parse|cat-file))\b")
+# Commands whose arguments are written, moved or removed. Everything else that names a protected path
+# is reading it, and defers.
+_ALL_ARGS = {"rm", "rmdir", "unlink", "shred", "truncate", "chmod", "chown", "chflags", "touch", "tee", "mv"}
+_LAST_ARG = {"cp", "ln", "install", "rsync"}
+_IN_PLACE = {"sed": ("-i", "--in-place"), "perl": ("-i", "-pi", "-pie"), "ruby": ("-i",), "gsed": ("-i", "--in-place")}
 
 
 def _segments(command: str) -> List[List[str]]:
-    """Split on command separators, then tokenize each part. Raises ValueError on bad quoting."""
+    """Split on command separators, then tokenize each part, with redirections as their own tokens.
+    Raises ValueError on bad quoting."""
     out = []
     for part in _SEPARATORS.split(command.replace("\\\n", " ")):
         part = part.strip()
         if part:
-            out.append(shlex.split(part, posix=True))
+            lex = shlex.shlex(part, posix=True, punctuation_chars="<>&()")
+            lex.whitespace_split = True
+            out.append(list(lex))
     return out
+
+
+def _write_targets(tokens: List[str]) -> List[str]:
+    """The paths a command segment would write, as far as a token reader can tell."""
+    targets: List[str] = []
+    for i, t in enumerate(tokens):  # redirections
+        if t in (">", ">>", ">|", "&>") and i + 1 < len(tokens):
+            targets.append(tokens[i + 1])
+    args = [t for t in tokens[1:] if not t.startswith("-") and t not in (">", ">>", ">|", "&>", "<", "&")]
+    verb = tokens[0].rsplit("/", 1)[-1]
+    if verb in _ALL_ARGS:
+        targets += args
+    elif verb in _LAST_ARG and args:
+        targets.append(args[-1])
+    elif verb in _IN_PLACE and any(t.startswith(_IN_PLACE[verb]) for t in tokens[1:]):
+        targets += args[1:] if args else []
+    elif verb == "dd":
+        targets += [t[3:] for t in tokens[1:] if t.startswith("of=")]
+    elif verb == "find" and ("-delete" in tokens or "-exec" in tokens):
+        targets += [t for t in tokens[1:] if not t.startswith("-")][:1]
+    elif verb == "git" and len(tokens) > 1:
+        rest = [t for t in tokens[1:] if not t.startswith("-")]
+        if rest and rest[0] in ("rm", "mv"):
+            targets += rest[1:]
+    return targets
+
+
+def _relative(token: str, policy: Policy) -> str:
+    if policy.root and token.startswith(policy.root.rstrip("/") + "/"):
+        token = token[len(policy.root.rstrip("/")) + 1:]
+    while token.startswith("./"):
+        token = token[2:]
+    return token.rstrip("/")
 
 
 def _strip_env(tokens: List[str]) -> List[str]:
@@ -178,31 +225,34 @@ def shell_decision(command: str, policy: Policy, branch: str) -> Decision:
         segments = _segments(command)
     except ValueError:
         return Decision(DENY, "invalid-shell", "the command could not be tokenized, so it cannot be classified")
-    flat = " ".join(" ".join(seg) for seg in segments)
-    for pattern, code, reason in policy.deny_commands:
-        if re.search(pattern, flat, re.S):
-            return Decision(DENY, code, reason)
     protected = protected_patterns(policy)
+    existing_only = [g for g, _ in policy.protected_existing]
     for seg in segments:
         tokens = _strip_env(seg)
         if not tokens:
             continue
+        text = " ".join(tokens)
+        reading = bool(_READ_ONLY.match(text)) and not any(t in (">", ">>", ">|", "&>") for t in tokens)
+        if not reading:
+            for pattern, code, reason in policy.deny_commands:
+                if re.search(pattern, text, re.S):
+                    return Decision(DENY, code, reason)
         git = git_decision(tokens, policy, branch)
         if git:
             return git
-        text = " ".join(tokens)
-        if _READ_ONLY.match(text) and not re.search(r"[<>`$]", text):
-            continue
-        for token in tokens[1:]:
-            candidate = token.lstrip("./").rstrip("/")
+        for raw in _write_targets(tokens):
+            candidate = _relative(raw, policy)
             if not candidate:
                 continue
             for pattern in protected:
                 plain = pattern[:-3] if pattern.endswith("/**") else pattern
                 if _match(candidate, pattern) or candidate.casefold() == plain.casefold():
-                    return Decision(DENY, "protected-shell-target", "the command names a protected path: " + plain)
-                if tokens[0] in ("rm", "mv", "rmdir") and (plain.casefold().startswith(candidate.casefold() + "/")):
-                    return Decision(DENY, "protected-ancestor", "removing or moving an ancestor of a protected path")
+                    return Decision(DENY, "protected-shell-target", "the command writes a protected path: " + plain)
+                if plain.casefold().startswith(candidate.casefold() + "/") or candidate in (".", "*"):
+                    return Decision(DENY, "protected-ancestor", "the command writes or removes an ancestor of a protected path")
+            for pattern in existing_only:
+                if _match(candidate, pattern) and (policy.exists is None or policy.exists(candidate)):
+                    return Decision(DENY, "protected-shell-target", "the command writes an existing forward-only file: " + candidate)
     return Decision(DEFER, "shell-host-boundary", "unclassified shell effects stay with the host sandbox and permissions")
 
 

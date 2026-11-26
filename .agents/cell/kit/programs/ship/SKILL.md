@@ -1,6 +1,6 @@
 ---
-name: ship
-description: Take a finished change to a pull request — gates, conformance, attribution check, scoped commit, push to a feature branch, PR with the brief and evidence. Use when the work in the brief is done. Never merges.
+name: "ship"
+description: "Take finished work to a pull request: gates, attribution check, scoped commit, feature-branch push. Never merges."
 ---
 
 # ship — from done to a reviewable pull request

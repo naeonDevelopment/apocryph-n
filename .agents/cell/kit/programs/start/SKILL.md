@@ -1,6 +1,6 @@
 ---
-name: start
-description: Begin any task in this repository. Measures the tree, reads the cell's pulse and peers, checks the sandbox, and writes the task brief before any edit. Use at session start, after compaction, and before widening scope.
+name: "start"
+description: "Begin a task here: measure the tree, read the pulse and peers, check the sandbox, write the brief before editing."
 ---
 
 # start — measure, then brief
